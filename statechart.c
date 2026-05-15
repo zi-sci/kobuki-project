@@ -3,6 +3,11 @@
 *
 */
 
+/*
+* KobukiNavigationStatechart.c
+*
+*/
+
 
 //main changes from G-
 // made turn size either -1 or 1 for navigation , it does a flat 90 degree turn whenever it reverses - this made the corner mechanism a bit easier to do and also prevents wall hugging too much
@@ -13,9 +18,12 @@
 //only then the corner detected flag is turned off and it goes into its normal drive and obstable detected stage where turn size signs are back to normal
 
 #include "kobukiNavigationStatechart.h"
+#include "myrio/MyRio.h"
 #include <math.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+extern NiFpga_Session myrio_session;
 
 // Program States
 typedef enum {
@@ -53,6 +61,12 @@ void KobukiNavigationStatechart(
 	const bool isSimulator
 
 ) {
+	// to control LEDs
+	NiFpga_Status status;
+	status = MyRio_Open();
+	if (MyRio_IsNotSuccess(status)){ // If not successful
+		return;
+	}
 
 	// local state
 	static robotState_t  state = INITIAL; // current program state
@@ -383,6 +397,9 @@ void KobukiNavigationStatechart(
 		//what to put here?
 		break;
 	case ASCEND:
+		// TURN ON LED 1 (ignore red squiggly)
+		status = NiFpga_WriteU8(myrio_session, DOLED30, 0x02);
+
 		// Correct the orientation first as a precaution
 		if (turnSize < 0) {
 			leftWheelSpeed = -20;
@@ -398,6 +415,9 @@ void KobukiNavigationStatechart(
 		}
 		break;
 	case DESCEND:
+		// TURN ON LED 3 (ignore red squiggly)
+		status = NiFpga_WriteU8(myrio_session, DOLED30, 0x08);
+
 		// Correct the orientation first as a precaution
 		// If ground orientation reached, go 80% speed.
 		if (turnSize < 0) {
@@ -414,6 +434,10 @@ void KobukiNavigationStatechart(
 		}
 		break;
 	case REACH_PLATEAU:
+		// TURN ON LED 2 (ignore red squiggly)
+		status = NiFpga_WriteU8(myrio_session, DOLED30, 0x04);
+
+
 		leftWheelSpeed = rightWheelSpeed = 100;
 		break;
 	case COMPLETE:
