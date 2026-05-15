@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-extern NiFpga_Session myrio_session;
+extern NiFpga_Session myrio_session; // to control LEDs on the myRIO
 
 // Program States
 typedef enum {
