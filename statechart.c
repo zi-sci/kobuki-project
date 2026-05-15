@@ -325,14 +325,6 @@ void KobukiNavigationStatechart(
 		state = COMPLETE;
 	}
 
-
-
-
-
-
-
-
-
 	// else, no transitions are taken
 
 	//*****************
