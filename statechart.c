@@ -64,9 +64,6 @@ void KobukiNavigationStatechart(
 	// to control LEDs
 	NiFpga_Status status;
 	status = MyRio_Open();
-	if (MyRio_IsNotSuccess(status)){ // If not successful
-		return;
-	}
 
 	// local state
 	static robotState_t  state = INITIAL; // current program state
@@ -436,7 +433,6 @@ void KobukiNavigationStatechart(
 	case REACH_PLATEAU:
 		// TURN ON LED 2 (ignore red squiggly)
 		status = NiFpga_WriteU8(myrio_session, DOLED30, 0x04);
-
 
 		leftWheelSpeed = rightWheelSpeed = 100;
 		break;
