@@ -44,6 +44,8 @@ static double arrayAverage(int arrayLength, double array[]) {
 }
 #define DEG_PER_RAD (180.0 / M_PI) // degrees per radian
 #define RAD_PER_DEG (M_PI / 180.0) // radians per degree
+#define BUFFER_LEN 10
+
 
 void KobukiNavigationStatechart(
 	const short   maxWheelSpeed,
@@ -54,6 +56,12 @@ void KobukiNavigationStatechart(
 	short* const  pRightWheelSpeed,
 	short* const pLeftWheelSpeed,
 	const bool isSimulator
+
+
+	static double xAccel[BUFFER_LEN],
+	static double yAccel[BUFFER_LEN],
+	static double zAccel[BUFFER_LEN],
+	static int sensorSample
 
 ) {
 	// to control LEDs
@@ -79,15 +87,45 @@ void KobukiNavigationStatechart(
 	static int groundOrientation = 0;
 	static bool groundOrientationSet = false;
 
+//input current sensorSample into buffer, then reset sensorSample counter variable 
+	sensorSample = 0;
+	xAccel[sensorSample % BUFFER_LEN] = accelAxes.x;
+	yAccel[sensorSample % BUFFER_LEN] = accelAxes.y;
+	zAccel[sensorSample++ % BUFFER_LEN] = accelAxes.z;
+	if (sensorSample > BUFFER_LEN) {
+		sensorSample = 0;
+	}
+
+	//find acceleration average over buffer with actual entries
+	double xAccelAverage = arrayAverage(BUFFER_LEN,xAccel);
+	double yAccelAverage = arrayAverage(BUFFER_LEN,yAccel);
+	double zAccelAverage = arrayAverage(BUFFER_LEN,zAccel);
+
+
+	//https://inertiallabs.com/precision-pitch-and-roll-measurement-enhancing-accuracy-in-navigation-and-stability-control-system/
+
+	double yzMagAccel = sqrt(pow(yAccelAverage, 2) + pow(zAccelAverage, 2));
+	double xzMagAccel = sqrt(pow(xAccelAverage,2) + pow(zAccelAverage,2));
+
+	// either roll or pitch will tell if the kobuki is tilted since if x or y are tilted 
+	double rollAng = atan2(xAccelAverage, yzMagAccel) * DEG_PER_RAD; //gives information if it is tilted up or down i.e rotated around x axis
+	double pitchAng = atan2(yAccelAverage, xzMagAccel) * DEG_PER_RAD; //gives information if kobuki is not flat w.r.t to gravity i.e if rotated around y axis (want this to be zero)
+	// to caluclate yaw we need gyroscope data of kobuki but this should be analgous to netAngle(confirmation?).
+	double yaw = netAngle;
+
+
 	// hill-exclusive
 	static bool hasTilted = false; // to indicate that it is on a plateau
-	bool isAscending = accelAxes.x < -0.1; // x is facing up and gravity component is negative (noseUp)
-	bool isDescending = accelAxes.x > 0.1; // x is facing down and gravity component is positive (noseDown)
+	bool isAscending = rollAng > 5; // x is facing up and gravity component is negative (noseUp)
+	bool isDescending = rollAng < -5; // x is facing down and gravity component is positive (noseDown)
 
 	// outputs
 	short  leftWheelSpeed = 0; // speed of the left wheel, in mm/s
 	short rightWheelSpeed = 0; // speed of the right wheel, in mm/s
 	int reverseDistance = 0;
+
+
+
 	//*****************************************************
 	// state data - process inputs                        *
 	//*****************************************************
@@ -385,36 +423,28 @@ void KobukiNavigationStatechart(
 		status = NiFpga_WriteU8(myrio_session, DOLED30, 0x02);
 
 		// Correct the orientation first as a precaution
-		if (turnSize < 0) {
-			leftWheelSpeed = -20;
+		if (abs(netAngle - groundOrientation) > 10) {
+			leftWheelSpeed = 100;
 			rightWheelSpeed = -leftWheelSpeed;
 		}
 		else {
-			leftWheelSpeed = 20;
-			rightWheelSpeed = -leftWheelSpeed;
-		}
-
-		if (abs(netAngle - groundOrientation) < 2) {
-			leftWheelSpeed = rightWheelSpeed = 100;
+			leftWheelSpeed = 80 + pitchAng;
+			rightWheelSpeed = 80 - pitchAng;
 		}
 		break;
 	case DESCEND:
 		// TURN ON LED 3 (ignore red squiggly)
 		status = NiFpga_WriteU8(myrio_session, DOLED30, 0x08);
 
-		// Correct the orientation first as a precaution
+				// Correct the orientation first as a precaution
 		// If ground orientation reached, go 80% speed.
-		if (turnSize < 0) {
-			leftWheelSpeed = -20;
+		if (abs(netAngle - groundOrientation) > 10) {
+			leftWheelSpeed = 100;
 			rightWheelSpeed = -leftWheelSpeed;
 		}
 		else {
-			leftWheelSpeed = 20;
-			rightWheelSpeed = -leftWheelSpeed;
-		}
-		// If ground orientation reached, go 80% speed.
-		if (abs(netAngle - groundOrientation) < 2) {
-			leftWheelSpeed = rightWheelSpeed = 60;
+			leftWheelSpeed = 80 - pitchAng;
+			rightWheelSpeed = 80 + pitchAng;
 		}
 		break;
 	case REACH_PLATEAU:
