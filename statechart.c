@@ -55,7 +55,7 @@ void KobukiNavigationStatechart(
 	const accelerometer_t accelAxes, // in gs
 	short* const  pRightWheelSpeed,
 	short* const pLeftWheelSpeed,
-	const bool isSimulator
+	const bool isSimulator,
 
 
 	static double xAccel[BUFFER_LEN],
