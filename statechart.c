@@ -11,7 +11,7 @@
 
 extern NiFpga_Session myrio_session; // to control LEDs on the myRIO
 
-// change
+// change 
 
 // Program States
 typedef enum {
@@ -35,6 +35,13 @@ typedef enum {
 	COMPLETE
 } robotState_t;
 
+static double arrayAverage(int arrayLength, double array[]) {
+	double sum = 0;
+	for (int i = 0;i < arrayLength;i++) {
+		sum += array[i];
+	}
+	return sum / arrayLength;
+}
 #define DEG_PER_RAD (180.0 / M_PI) // degrees per radian
 #define RAD_PER_DEG (M_PI / 180.0) // radians per degree
 
