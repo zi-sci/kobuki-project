@@ -11,6 +11,8 @@
 
 extern NiFpga_Session myrio_session; // to control LEDs on the myRIO
 
+// change
+
 // Program States
 typedef enum {
 	INITIAL = 0, // Initial state
