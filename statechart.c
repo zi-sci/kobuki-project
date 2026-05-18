@@ -3,20 +3,6 @@
 *
 */
 
-/*
-* KobukiNavigationStatechart.c
-*
-*/
-
-
-//main changes from G-
-// made turn size either -1 or 1 for navigation , it does a flat 90 degree turn whenever it reverses - this made the corner mechanism a bit easier to do and also prevents wall hugging too much
-//commented out some transitions as they werent relevant for the navigation stage , but thye may be relevant for the hill climb so feel free to uncomment
-// removed the 2nd guard condition for the pivot left and right stages as they werent really relevant now that the turn size is 90 degrees, also in that same line added a couple more absolute values cos why not
-// added a cornerdetected flag: it activates if in the travel state it bumps into another opbect (a corner) before it gets to the correct orinertation state. when this happens, it reverses the turn size signs,
-// so now the object pivots the other way, away from the corner. Once the robot manages to get in the test new direction state and travels a reasonably large distance (indivating the obstsble is passed),
-//only then the corner detected flag is turned off and it goes into its normal drive and obstable detected stage where turn size signs are back to normal
-
 #include "kobukiNavigationStatechart.h"
 #include "myrio/MyRio.h"
 #include <math.h>
