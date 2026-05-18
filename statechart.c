@@ -71,7 +71,7 @@ void KobukiNavigationStatechart(
 	static bool groundOrientationSet = false;
 
 	// hill-exclusive
-	bool hasTilted = false; // to indicate that it is on a plateau
+	static bool hasTilted = false; // to indicate that it is on a plateau
 	bool isAscending = accelAxes.x < -0.1; // x is facing up and gravity component is negative (noseUp)
 	bool isDescending = accelAxes.x > 0.1; // x is facing down and gravity component is positive (noseDown)
 
